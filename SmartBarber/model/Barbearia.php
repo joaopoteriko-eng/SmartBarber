@@ -21,4 +21,23 @@ class Barbearia
             ->query('SELECT id_barbearia, nome_fantasia FROM barbearias WHERE ativa = 1 ORDER BY nome_fantasia')
             ->fetchAll();
     }
+        public static function criarComDono(array $barbearia, array $dono): void
+        {
+            $pdo = Database::conectar();
+            $pdo->beginTransaction();
+            try {
+                $st = $pdo->prepare('INSERT INTO barbearias (nome_fantasia, cnpj) VALUES (?, ?)');
+                $st->execute([$barbearia['nome_fantasia'], $barbearia['cnpj']]);
+                $idBarbearia = (int)$pdo->lastInsertId();
+    
+                $dono['id_barbearia'] = $idBarbearia;
+                $dono['perfil'] = 'dono';
+                Usuario::criar($dono);
+    
+                $pdo->commit();
+            } catch (Throwable $e) {
+                $pdo->rollBack();
+                throw $e;
+            }
+        }
 }
